@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+    <gui>
+      <camera name="user_camera">
+        <pose>-20 0 50 0 1.0 0</pose>
+      </camera>
+    </gui>
+    <scene>
+      <shadows>0</shadows>
+    </scene>
+
+    <!-- Sun -->
+    <include>
+      <uri>model://sun_2</uri>
+    </include>
+
+    <!-- Blue ground, scaled up 10× in X and Y -->
+    <include>
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>model://blue_ground</uri>
+      <scale>10 10 1</scale>
+    </include>
+
+  </world>
+</sdf>
