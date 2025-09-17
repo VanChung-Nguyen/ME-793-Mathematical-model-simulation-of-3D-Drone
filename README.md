@@ -50,3 +50,23 @@ $ ros2 run smcmpcquad smcmpcquad
 # Step 3: To run the plot 
 $ ros2 run smcmpcquad plot
 ```
+
+Some figures that show the hovering and tracking ability of the robot:
+<p align="center">
+  <img src="figures/imuhovering.png" alt="imuhovering" width="500">
+</p>
+<p align="center">
+  <img src="figures/ofhovering.png" alt="ofhovering" width="500">
+</p>
+<p align="center">
+  <img src="figures/positionhovering.png" alt="positionhovering" width="500">
+</p>
+<p align="center">
+  <img src="figures/imutracking.png" alt="imutracking" width="500">
+</p>
+<p align="center">
+  <img src="figures/oftracking.png" alt="oftracking" width="500">
+</p>
+<p align="center">
+  <img src="figures/positiontracking.png" alt="positiontracking" width="500">
+</p>
