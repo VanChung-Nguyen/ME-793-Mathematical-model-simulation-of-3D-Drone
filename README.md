@@ -34,3 +34,19 @@ $ Then copy the following line to the bash file: export GAZEBO_MODEL_PATH=$GAZEB
 ```
 * Note that the package contains the code generation and includes the qpOASES library. If the user wants to use SM-NMPC for a different problem, they need to regenerate the code and replace it to the include folder.
 * Note that this project uses a custom plugin. Users need to replace the plugin path in the file /urdf/uav_drone.urdf.xacro at line 469. Replace: plugin name="uavplugin" filename="/home/vanchung/ros2_ws/install/smcmpcquad/lib/smcmpcquad/libuavplugin.so" with the correct path by changing the username to the name of your computer. Then rebuild the project again to run the simulation.
+
+## Simulation results
+
+To run the simulation, follow these commands:
+
+```shell
+# Step 1: Run the Gazebo model:
+$ ros2 launch smcmpcquad model.launch.py
+
+# Step 2: Run the optical flow and controller
+$ ros2 run smcmpcquad opticalflownode
+$ ros2 run smcmpcquad smcmpcquad
+
+# Step 3: To run the plot 
+$ ros2 run smcmpcquad plot
+```
