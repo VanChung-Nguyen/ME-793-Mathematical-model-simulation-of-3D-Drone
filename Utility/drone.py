@@ -194,7 +194,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             x = a * np.sin(w*tsim)
             y = a * np.sin(w*tsim) * np.cos(w*tsim)
             z = 1.2 + 0.4*np.sin(0.5*w*tsim + 0.7)
-            psi = np.unwrap(np.arctan2(np.gradient(y, dt), np.gradient(x, dt)))
+            psi = NA
             setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'alternating':
@@ -229,14 +229,14 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             for arr in (x,y,z):
                 if len(arr) > len(tsim):
                     arr[:] = arr[:len(tsim)]
-            psi = np.unwrap(np.arctan2(np.gradient(y, dt), np.gradient(x, dt)))
+            psi = NA
             setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'squiggle':
             x = 2.0*np.cos(2*np.pi*0.30*tsim)
             y = 1.5*np.sin(2*np.pi*0.22*tsim + 0.4)
             z = 0.8 + 0.4*np.sin(2*np.pi*0.18*tsim + 0.9)
-            psi = np.unwrap(np.arctan2(np.gradient(y, dt), np.gradient(x, dt)))
+            psi = NA
             setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'random':
@@ -254,7 +254,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             x = generate_smooth_curve(tsim, smoothness=0.15, amplitude=3.0, seed=42)
             y = generate_smooth_curve(tsim, smoothness=0.12, amplitude=2.6, seed=7)
             z = 1.5 + 0.6*generate_smooth_curve(tsim, smoothness=0.10, amplitude=2.0, seed=24)
-            psi = np.unwrap(np.arctan2(np.gradient(y, dt), np.gradient(x, dt)))
+            psi = NA
             setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'constant_psidot':
