@@ -20,7 +20,6 @@ Izz = 0.105
 kt  = 0.00025       # thrust coefficient (thrust = kt * u_i) with u_i ∝ Ω_i^2
 kd  = 0.000004      # yaw drag coefficient (yaw torque = ± kd * u_i)
 
-
 ############################################################################################
 # Continuous-time dynamics (full 3D)
 ############################################################################################
@@ -43,44 +42,46 @@ class F(object):
             return ['x','y','z','phi','theta','psi',
                     'xdot','ydot','zdot','phidot','thetadot','psidot']
 
-            x, y, z, phi, theta, psi = x_vec[0:6]
-            xdot, ydot, zdot = x_vec[6:9]
-            phidot, thetadot, psidot = x_vec[9:12]
-        
-            # Inputs
-            u1, u2, u3, u4 = u_vec
-        
-            # Shorthands
-            cphi, sphi = np.cos(phi), np.sin(phi)
-            cth, sth = np.cos(theta), np.sin(theta)
-            cpsi, spsi = np.cos(psi), np.sin(psi)
-        
-            # Body z-axis in world frame
-            ez_w_x = spsi * sphi + cpsi * sth * cphi
-            ez_w_y = spsi * sth * cphi - cpsi * sphi
-            ez_w_z = cphi * cth
-        
-            # Angular rates
-            p, q, r = phidot, thetadot, psidot
-        
-            # --- f0: drift (no control) ---
-            f0_contribution = np.array([
-                xdot,
-                ydot,
-                zdot,
-                phidot,
-                thetadot,
-                psidot,
-                0.0,
-                0.0,
-                -g,
-                ((Iyy - Izz)/Ixx)*q*r,
-                ((Izz - Ixx)/Iyy)*r*p,
-                ((Ixx - Iyy)/Izz)*p*q
-            ])
-        
-            # --- f1: contribution for u1 ---
-            f1_contribution = np.array([
+        # --- unpack ---
+        x_vec = np.asarray(x_vec, dtype=float)
+        u_vec = np.asarray(u_vec, dtype=float)
+        u1, u2, u3, u4 = u_vec
+
+        x, y, z, phi, theta, psi = x_vec[0:6]
+        xdot, ydot, zdot         = x_vec[6:9]
+        phidot, thetadot, psidot = x_vec[9:12]
+
+        # Trig shorthands
+        cphi, sphi = np.cos(phi), np.sin(phi)
+        cth,  sth  = np.cos(theta), np.sin(theta)
+        cpsi, spsi = np.cos(psi), np.sin(psi)
+
+        # Body z-axis expressed in world (3rd column of Rz*Ry*Rx)
+        ez_w_x = spsi*sphi + cpsi*sth*cphi
+        ez_w_y = -cpsi*sphi + spsi*sth*cphi
+        ez_w_z = cphi*cth
+
+        # Angular rates (body)
+        p, q, r = phidot, thetadot, psidot
+
+        # --- drift (no control) ---
+        f0_contribution = np.array([
+            xdot,
+            ydot,
+            zdot,
+            phidot,
+            thetadot,
+            psidot,
+            0.0,
+            0.0,
+            -g,
+            ((Iyy - Izz)/Ixx)*q*r,
+            ((Izz - Ixx)/Iyy)*r*p,
+            ((Ixx - Iyy)/Izz)*p*q
+        ])
+
+        # --- f1: contribution for u1 ---
+        f1_contribution = np.array([
                 0.0,
                 0.0,
                 0.0,
@@ -96,7 +97,7 @@ class F(object):
             ])
         
             # --- f2: contribution for u2 ---
-            f2_contribution = np.array([
+        f2_contribution = np.array([
                 0.0,
                 0.0,
                 0.0,
@@ -112,7 +113,7 @@ class F(object):
             ])
         
             # --- f3: contribution for u3 ---
-            f3_contribution = np.array([
+        f3_contribution = np.array([
                 0.0,
                 0.0,
                 0.0,
@@ -128,7 +129,7 @@ class F(object):
             ])
         
             # --- f4: contribution for u4 ---
-            f4_contribution = np.array([
+        f4_contribution = np.array([
                 0.0,
                 0.0,
                 0.0,
@@ -142,9 +143,7 @@ class F(object):
                 ( lx * kt * u4) / Iyy,
                 ( kd * u4) / Izz
             ])
-        
-            # --- Combine dynamics ---
-            x_dot_vec = f0_contribution + f1_contribution + f2_contribution + f3_contribution + f4_contribution
+        x_dot_vec = f0_contribution + f1_contribution + f2_contribution + f3_contribution + f4_contribution
         return x_dot_vec
 
 ############################################################################################
@@ -158,7 +157,6 @@ class H(object):
       - Euler angles phi, theta, psi
       - angular rates phidot, thetadot, psidot
       - accelerations (world-frame ax, ay, az) from dynamics
-        (Switch to body specific force if needed.)
     """
     def __init__(self, measurement_option='h_all'):
         self.measurement_option = measurement_option
@@ -166,8 +164,9 @@ class H(object):
     def h(self, x_vec, u_vec, return_measurement_names=False):
         if not hasattr(self, self.measurement_option):
             raise AttributeError(f"Unknown measurement option: {self.measurement_option}")
-        return getattr(self, self.measurement_option)(x_vec, u_vec,
-                                                     return_measurement_names=return_measurement_names)
+        return getattr(self, self.measurement_option)(
+            x_vec, u_vec, return_measurement_names=return_measurement_names
+        )
 
     def h_all(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
@@ -179,17 +178,17 @@ class H(object):
                 'ax','ay','az'
             ]
 
-        # Unpack state
+        x_vec = np.asarray(x_vec, dtype=float)
         x, y, z, phi, theta, psi = x_vec[0:6]
         xdot, ydot, zdot         = x_vec[6:9]
         p, q, r                  = x_vec[9:12]
 
-        # safe optical flow
-        z_safe = max(abs(z), 1e-6)
+        # safe optical flow (clamp depth)
+        z_safe = max(1e-6, abs(float(z)))
         of_x = xdot / z_safe
         of_y = ydot / z_safe
 
-        # Accel from dynamics to stay consistent
+        # Accel from dynamics to stay consistent with the process model
         ax, ay, az = F().f(x_vec, u_vec)[6:9]
 
         y_vec = np.array([
@@ -217,7 +216,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
 
     if measurement_names is None:
         measurement_names = H().h(None, None, return_measurement_names=True)
-                     
+
     # Initialize simulator
     simulator = pybounds.Simulator(
         f, h, dt=dt,
@@ -337,7 +336,6 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
     simulator.mpc.set_rterm(u1=rterm, u2=rterm, u3=rterm, u4=rterm)
 
     # === Bounds ===
-    # attitude limits
     simulator.mpc.bounds['lower', '_x', 'phi']   = -np.pi/4
     simulator.mpc.bounds['upper', '_x', 'phi']   =  np.pi/4
     simulator.mpc.bounds['lower', '_x', 'theta'] = -np.pi/4
