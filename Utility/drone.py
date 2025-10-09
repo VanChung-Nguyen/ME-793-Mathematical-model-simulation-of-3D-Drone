@@ -172,7 +172,8 @@ class H(object):
         x, y, z, phi, theta, psi = x_vec[0:6]
         xdot, ydot, zdot         = x_vec[6:9]
         p, q, r                  = x_vec[9:12]
-
+        u1, u2, u3, u4 = u_vec
+        
         cphi, sphi = np.cos(phi), np.sin(phi)
         cth, sth = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
@@ -181,7 +182,7 @@ class H(object):
         ez_w_x = spsi * sphi + cpsi * sth * cphi
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
-    
+        
         T = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
