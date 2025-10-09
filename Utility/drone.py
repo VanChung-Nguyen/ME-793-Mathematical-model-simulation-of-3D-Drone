@@ -20,18 +20,6 @@ Izz = 0.105
 kt  = 0.00025       # thrust coefficient (thrust = kt * u_i) with u_i ∝ Ω_i^2
 kd  = 0.000004      # yaw drag coefficient (yaw torque = ± kd * u_i)
 
-############################################################################################
-# Helpers
-############################################################################################
-def body_z_in_world(phi, theta, psi):
-    """Return the body z-axis expressed in world frame (3rd col of RzRyRx)."""
-    cphi, sphi = np.cos(phi), np.sin(phi)
-    cth,  sth  = np.cos(theta), np.sin(theta)
-    cpsi, spsi = np.cos(psi), np.sin(psi)
-    ez_x = cpsi * sth * cphi + spsi * sphi
-    ez_y = spsi * sth * cphi - cpsi * sphi
-    ez_z = cth  * cphi
-    return ez_x, ez_y, ez_z
 
 ############################################################################################
 # Continuous-time dynamics (full 3D)
@@ -55,40 +43,108 @@ class F(object):
             return ['x','y','z','phi','theta','psi',
                     'xdot','ydot','zdot','phidot','thetadot','psidot']
 
-        # Unpack state
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot         = x_vec[6:9]
-        p, q, r                  = x_vec[9:12]   # p=phidot, q=thetadot, r=psidot
-
-        # Inputs
-        u1, u2, u3, u4 = u_vec
-
-        # Body z-axis in world
-        ez_x, ez_y, ez_z = body_z_in_world(phi, theta, psi)
-
-        # Thrust and torques
-        T     = kt * (u1 + u2 + u3 + u4)
-        tau_x = lx * kt * ((u2 + u3) - (u1 + u4))          # roll
-        tau_y = lx * kt * ((u1 + u2) - (u3 + u4))          # pitch
-        tau_z = kd * (u1 - u2 + u3 - u4)                   # yaw
-
-        # Translational accel in world
-        ax = (T / m) * ez_x
-        ay = (T / m) * ez_y
-        az = (T / m) * ez_z - g
-
-        # Rotational dynamics (Euler rigid body)
-        p_dot = (tau_x + (Iyy - Izz) * q * r) / Ixx
-        q_dot = (tau_y + (Izz - Ixx) * r * p) / Iyy
-        r_dot = (tau_z + (Ixx - Iyy) * p * q) / Izz
-
-        # Pack derivative
-        x_dot_vec = np.array([
-            xdot, ydot, zdot,
-            p, q, r,
-            ax, ay, az,
-            p_dot, q_dot, r_dot
-        ])
+            x, y, z, phi, theta, psi = x_vec[0:6]
+            xdot, ydot, zdot = x_vec[6:9]
+            phidot, thetadot, psidot = x_vec[9:12]
+        
+            # Inputs
+            u1, u2, u3, u4 = u_vec
+        
+            # Shorthands
+            cphi, sphi = np.cos(phi), np.sin(phi)
+            cth, sth = np.cos(theta), np.sin(theta)
+            cpsi, spsi = np.cos(psi), np.sin(psi)
+        
+            # Body z-axis in world frame
+            ez_w_x = spsi * sphi + cpsi * sth * cphi
+            ez_w_y = spsi * sth * cphi - cpsi * sphi
+            ez_w_z = cphi * cth
+        
+            # Angular rates
+            p, q, r = phidot, thetadot, psidot
+        
+            # --- f0: drift (no control) ---
+            f0_contribution = np.array([
+                xdot,
+                ydot,
+                zdot,
+                phidot,
+                thetadot,
+                psidot,
+                0.0,
+                0.0,
+                -g,
+                ((Iyy - Izz)/Ixx)*q*r,
+                ((Izz - Ixx)/Iyy)*r*p,
+                ((Ixx - Iyy)/Izz)*p*q
+            ])
+        
+            # --- f1: contribution for u1 ---
+            f1_contribution = np.array([
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                (kt/m) * ez_w_x * u1,
+                (kt/m) * ez_w_y * u1,
+                (kt/m) * ez_w_z * u1,
+                (-lx * kt * u1) / Ixx,
+                (-lx * kt * u1) / Iyy,
+                ( kd * u1) / Izz
+            ])
+        
+            # --- f2: contribution for u2 ---
+            f2_contribution = np.array([
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                (kt/m) * ez_w_x * u2,
+                (kt/m) * ez_w_y * u2,
+                (kt/m) * ez_w_z * u2,
+                ( lx * kt * u2) / Ixx,
+                (-lx * kt * u2) / Iyy,
+                (-kd * u2) / Izz
+            ])
+        
+            # --- f3: contribution for u3 ---
+            f3_contribution = np.array([
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                (kt/m) * ez_w_x * u3,
+                (kt/m) * ez_w_y * u3,
+                (kt/m) * ez_w_z * u3,
+                (-lx * kt * u3) / Ixx,
+                ( lx * kt * u3) / Iyy,
+                (-kd * u3) / Izz
+            ])
+        
+            # --- f4: contribution for u4 ---
+            f4_contribution = np.array([
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                (kt/m) * ez_w_x * u4,
+                (kt/m) * ez_w_y * u4,
+                (kt/m) * ez_w_z * u4,
+                ( lx * kt * u4) / Ixx,
+                ( lx * kt * u4) / Iyy,
+                ( kd * u4) / Izz
+            ])
+        
+            # --- Combine dynamics ---
+            x_dot_vec = f0_contribution + f1_contribution + f2_contribution + f3_contribution + f4_contribution
         return x_dot_vec
 
 ############################################################################################
@@ -117,10 +173,10 @@ class H(object):
         if return_measurement_names:
             return [
                 'x','y','z',
-                'optical_flow_x','optical_flow_y',
+                'optic_flow_x','optic_flow_y',
                 'phi','theta','psi',
                 'phidot','thetadot','psidot',
-                'accx','accy','accz'
+                'ax','ay','az'
             ]
 
         # Unpack state
@@ -180,7 +236,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
         assert trajectory_shape in ['circle','lemniscate','alternating','squiggle','random','constant_psidot']
 
         if trajectory_shape == 'circle':
-            R = 2.0
+            R = 0.1
             w = 0.3 * 2*np.pi
             x = R*np.cos(w*tsim)
             y = R*np.sin(w*tsim)
@@ -267,20 +323,15 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
 
     # Feed setpoints into simulator's TVPs
     # Convention: simulator.model.tvp has fields 'x_set','y_set','z_set','psi_set' if used in your pybounds model.
-    sp = {k: np.asarray(v) for k, v in setpoint.items()}
-    if 'x'  in sp: simulator.update_dict({'x':  sp['x']},  name='setpoint')
-    if 'y'  in sp: simulator.update_dict({'y':  sp['y']},  name='setpoint')
-    if 'z'  in sp: simulator.update_dict({'z':  sp['z']},  name='setpoint')
-    if 'psi' in sp: simulator.update_dict({'psi': sp['psi']}, name='setpoint')
+    simulator.update_dict(setpoint, name='setpoint')
 
-    # === Cost: track x,y,z (and psi if provided) ===
-    # These attribute paths assume your pybounds model exposes state symbols as shown.
-    cost  = (simulator.model.x['x'] - simulator.model.tvp['x_set'])**2
-    cost += (simulator.model.x['y'] - simulator.model.tvp['y_set'])**2
-    cost += (simulator.model.x['z'] - simulator.model.tvp['z_set'])**2
-    if 'psi' in sp:
-        # wrap-around friendly yaw tracking could use sin/cos; simple L2 for now:
-        cost += (simulator.model.x['psi'] - simulator.model.tvp['psi_set'])**2
+    # --- Objective (track position + altitude + yaw) ---
+    # Use tvp keys exactly as defined above (no *_set suffixes)
+    cost_x   = (simulator.model.x['x']   - simulator.model.tvp['x_set'])   ** 2
+    cost_y   = (simulator.model.x['y']   - simulator.model.tvp['y_set'])   ** 2
+    cost_z   = (simulator.model.x['z']   - simulator.model.tvp['z_set'])   ** 2
+    cost_psi = (simulator.model.x['psi'] - simulator.model.tvp['psi_set']) ** 2
+    cost = cost_x + cost_y + cost_z + cost_psi
 
     simulator.mpc.set_objective(mterm=cost, lterm=cost)
     simulator.mpc.set_rterm(u1=rterm, u2=rterm, u3=rterm, u4=rterm)
