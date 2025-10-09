@@ -161,19 +161,19 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
 
     if measurement_names is None:
         measurement_names = H().h(None, None, return_measurement_names=True)
-
+                     
     # Initialize simulator
     simulator = pybounds.Simulator(
         f, h, dt=dt,
         state_names=state_names,
         input_names=input_names,
         measurement_names=measurement_names,
-        mpc_horizon=max(5, int(1.0/dt))
+        mpc_horizon=10
     )
 
     # Time base
     tsim = np.arange(0.0, tsim_length, step=dt)
-    Z = np.zeros_like(tsim)
+    NA = np.zeros_like(tsim)
 
     # Build default 3D setpoints if none provided
     if setpoint is None:
@@ -185,7 +185,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             x = R*np.cos(w*tsim)
             y = R*np.sin(w*tsim)
             z = 1.0 + 0.3*np.sin(0.5*w*tsim)
-            psi = np.unwrap(np.arctan2(np.gradient(y, dt), np.gradient(x, dt)))
+            psi = NA
             setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'lemniscate':
