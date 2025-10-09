@@ -199,9 +199,9 @@ class H(object):
             phi,
             theta,
             psi,
-            phidot,
-            thetadot,
-            psidot,
+            p,
+            q,
+            r,
             ax,
             ay,
             az
