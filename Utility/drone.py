@@ -43,12 +43,8 @@ class F(object):
                     'xdot','ydot','zdot','phidot','thetadot','psidot']
 
         # --- unpack ---
-        x_vec = np.asarray(x_vec, dtype=float)
-        u_vec = np.asarray(u_vec, dtype=float)
-        u1, u2, u3, u4 = u_vec
-
         x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot         = x_vec[6:9]
+        xdot, ydot, zdot = x_vec[6:9]
         phidot, thetadot, psidot = x_vec[9:12]
 
         # Trig shorthands
@@ -178,7 +174,6 @@ class H(object):
                 'ax','ay','az'
             ]
 
-        x_vec = np.asarray(x_vec, dtype=float)
         x, y, z, phi, theta, psi = x_vec[0:6]
         xdot, ydot, zdot         = x_vec[6:9]
         p, q, r                  = x_vec[9:12]
