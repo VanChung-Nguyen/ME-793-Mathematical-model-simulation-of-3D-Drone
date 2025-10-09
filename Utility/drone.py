@@ -33,29 +33,27 @@ class F(object):
                     'xdot','ydot','zdot','phidot','thetadot','psidot']
 
         # --- ensure scalars when indexing ---
-        x_vec = np.asarray(x_vec, dtype=float).reshape(-1)
-        u_vec = np.asarray(u_vec, dtype=float).reshape(-1)
-
-        # --- unpack (all scalars now) ---
         x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot         = x_vec[6:9]
+        xdot, ydot, zdot = x_vec[6:9]
         phidot, thetadot, psidot = x_vec[9:12]
-        u1, u2, u3, u4           = u_vec[0:4]
-
-        # Trig shorthands
+    
+        # Inputs
+        u1, u2, u3, u4 = u_vec
+    
+        # Shorthands
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth,  sth  = np.cos(theta), np.sin(theta)
+        cth, sth = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
-
-        # Body z-axis in world (Rz*Ry*Rx third column)
-        ez_w_x = spsi*sphi + cpsi*sth*cphi
-        ez_w_y = -cpsi*sphi + spsi*sth*cphi
-        ez_w_z = cphi*cth
-
+    
+        # Body z-axis in world frame
+        ez_w_x = spsi * sphi + cpsi * sth * cphi
+        ez_w_y = spsi * sth * cphi - cpsi * sphi
+        ez_w_z = cphi * cth
+    
         # Angular rates
         p, q, r = phidot, thetadot, psidot
-
-        # --- drift (no control) ---
+    
+        # --- f0: drift (no control) ---
         f0_contribution = np.array([
             xdot,
             ydot,
@@ -69,52 +67,73 @@ class F(object):
             ((Iyy - Izz)/Ixx)*q*r,
             ((Izz - Ixx)/Iyy)*r*p,
             ((Ixx - Iyy)/Izz)*p*q
-        ], dtype=float)
-
+        ])
+    
         # --- f1: contribution for u1 ---
         f1_contribution = np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
             (kt/m) * ez_w_x * u1,
             (kt/m) * ez_w_y * u1,
             (kt/m) * ez_w_z * u1,
             (-lx * kt * u1) / Ixx,
             (-lx * kt * u1) / Iyy,
-            ( kd * u1)       / Izz
-        ], dtype=float)
-
+            ( kd * u1) / Izz
+        ])
+    
         # --- f2: contribution for u2 ---
         f2_contribution = np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
             (kt/m) * ez_w_x * u2,
             (kt/m) * ez_w_y * u2,
             (kt/m) * ez_w_z * u2,
             ( lx * kt * u2) / Ixx,
             (-lx * kt * u2) / Iyy,
-            (-kd * u2)       / Izz
-        ], dtype=float)
-
+            (-kd * u2) / Izz
+        ])
+    
         # --- f3: contribution for u3 ---
         f3_contribution = np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
             (kt/m) * ez_w_x * u3,
             (kt/m) * ez_w_y * u3,
             (kt/m) * ez_w_z * u3,
             (-lx * kt * u3) / Ixx,
             ( lx * kt * u3) / Iyy,
-            (-kd * u3)       / Izz
-        ], dtype=float)
-
+            (-kd * u3) / Izz
+        ])
+    
         # --- f4: contribution for u4 ---
         f4_contribution = np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
             (kt/m) * ez_w_x * u4,
             (kt/m) * ez_w_y * u4,
             (kt/m) * ez_w_z * u4,
             ( lx * kt * u4) / Ixx,
             ( lx * kt * u4) / Iyy,
-            ( kd * u4)       / Izz
-        ], dtype=float)
-
+            ( kd * u4) / Izz
+        ])
+    
+        # --- Combine dynamics ---
         x_dot_vec = f0_contribution + f1_contribution + f2_contribution + f3_contribution + f4_contribution
         return x_dot_vec
 
@@ -154,20 +173,37 @@ class H(object):
         xdot, ydot, zdot         = x_vec[6:9]
         p, q, r                  = x_vec[9:12]
 
-        # safe optical flow (clamp depth)
-        z_safe = max(1e-6, abs(float(z)))
-        of_x = xdot / z_safe
-        of_y = ydot / z_safe
-
-        # Accel from dynamics to stay consistent with the process model
-        ax, ay, az = F().f(x_vec, u_vec)[6:9]
-
+        cphi, sphi = np.cos(phi), np.sin(phi)
+        cth, sth = np.cos(theta), np.sin(theta)
+        cpsi, spsi = np.cos(psi), np.sin(psi)
+    
+        # Body z-axis in world frame
+        ez_w_x = spsi * sphi + cpsi * sth * cphi
+        ez_w_y = spsi * sth * cphi - cpsi * sphi
+        ez_w_z = cphi * cth
+    
+        T = kt * (u1 + u2 + u3 + u4)
+        ax = (T / m) * ez_w_x
+        ay = (T / m) * ez_w_y
+        az = (T / m) * ez_w_z - g
+    
+        z_safe = z if abs(z) > 1e-3 else 1e-3
+    
         y_vec = np.array([
-            x, y, z,
-            of_x, of_y,
-            phi, theta, psi,
-            p, q, r,
-            ax, ay, az
+            x,
+            y,
+            z,
+            xdot / z_safe,
+            ydot / z_safe,
+            phi,
+            theta,
+            psi,
+            phidot,
+            thetadot,
+            psidot,
+            ax,
+            ay,
+            az
         ])
         return y_vec
 
