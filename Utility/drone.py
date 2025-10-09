@@ -46,7 +46,7 @@ class F(object):
         x, y, z, phi, theta, psi = x_vec[0:6]
         xdot, ydot, zdot = x_vec[6:9]
         phidot, thetadot, psidot = x_vec[9:12]
-
+        u1, u2, u3, u4 = u_vec
         # Trig shorthands
         cphi, sphi = np.cos(phi), np.sin(phi)
         cth,  sth  = np.cos(theta), np.sin(theta)
