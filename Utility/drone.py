@@ -24,16 +24,6 @@ kd  = 0.000004      # yaw drag coefficient (yaw torque = ± kd * u_i)
 # Continuous-time dynamics (full 3D)
 ############################################################################################
 class F(object):
-    """
-    State x = [x, y, z, phi, theta, psi, xdot, ydot, zdot, phidot, thetadot, psidot]
-    Inputs u = [u1, u2, u3, u4]  (per-rotor commands, ∝ Ω^2)
-
-    Motor/spin layout (adjust signs if yours differs):
-      1: front-left   (CCW, +yaw)
-      2: front-right  (CW,  -yaw)
-      3: rear-right   (CCW, +yaw)
-      4: rear-left    (CW,  -yaw)
-    """
     def f(self, x_vec, u_vec,
           m=m, g=g, lx=lx, Ixx=Ixx, Iyy=Iyy, Izz=Izz, kt=kt, kd=kd,
           return_state_names=False):
@@ -42,22 +32,27 @@ class F(object):
             return ['x','y','z','phi','theta','psi',
                     'xdot','ydot','zdot','phidot','thetadot','psidot']
 
-        # --- unpack ---
+        # --- ensure scalars when indexing ---
+        x_vec = np.asarray(x_vec, dtype=float).reshape(-1)
+        u_vec = np.asarray(u_vec, dtype=float).reshape(-1)
+
+        # --- unpack (all scalars now) ---
         x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
+        xdot, ydot, zdot         = x_vec[6:9]
         phidot, thetadot, psidot = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        u1, u2, u3, u4           = u_vec[0:4]
+
         # Trig shorthands
         cphi, sphi = np.cos(phi), np.sin(phi)
         cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
-        # Body z-axis expressed in world (3rd column of Rz*Ry*Rx)
+        # Body z-axis in world (Rz*Ry*Rx third column)
         ez_w_x = spsi*sphi + cpsi*sth*cphi
         ez_w_y = -cpsi*sphi + spsi*sth*cphi
         ez_w_z = cphi*cth
 
-        # Angular rates (body)
+        # Angular rates
         p, q, r = phidot, thetadot, psidot
 
         # --- drift (no control) ---
@@ -74,71 +69,52 @@ class F(object):
             ((Iyy - Izz)/Ixx)*q*r,
             ((Izz - Ixx)/Iyy)*r*p,
             ((Ixx - Iyy)/Izz)*p*q
-        ])
+        ], dtype=float)
 
         # --- f1: contribution for u1 ---
         f1_contribution = np.array([
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                (kt/m) * ez_w_x * u1,
-                (kt/m) * ez_w_y * u1,
-                (kt/m) * ez_w_z * u1,
-                (-lx * kt * u1) / Ixx,
-                (-lx * kt * u1) / Iyy,
-                ( kd * u1) / Izz
-            ])
-        
-            # --- f2: contribution for u2 ---
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            (kt/m) * ez_w_x * u1,
+            (kt/m) * ez_w_y * u1,
+            (kt/m) * ez_w_z * u1,
+            (-lx * kt * u1) / Ixx,
+            (-lx * kt * u1) / Iyy,
+            ( kd * u1)       / Izz
+        ], dtype=float)
+
+        # --- f2: contribution for u2 ---
         f2_contribution = np.array([
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                (kt/m) * ez_w_x * u2,
-                (kt/m) * ez_w_y * u2,
-                (kt/m) * ez_w_z * u2,
-                ( lx * kt * u2) / Ixx,
-                (-lx * kt * u2) / Iyy,
-                (-kd * u2) / Izz
-            ])
-        
-            # --- f3: contribution for u3 ---
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            (kt/m) * ez_w_x * u2,
+            (kt/m) * ez_w_y * u2,
+            (kt/m) * ez_w_z * u2,
+            ( lx * kt * u2) / Ixx,
+            (-lx * kt * u2) / Iyy,
+            (-kd * u2)       / Izz
+        ], dtype=float)
+
+        # --- f3: contribution for u3 ---
         f3_contribution = np.array([
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                (kt/m) * ez_w_x * u3,
-                (kt/m) * ez_w_y * u3,
-                (kt/m) * ez_w_z * u3,
-                (-lx * kt * u3) / Ixx,
-                ( lx * kt * u3) / Iyy,
-                (-kd * u3) / Izz
-            ])
-        
-            # --- f4: contribution for u4 ---
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            (kt/m) * ez_w_x * u3,
+            (kt/m) * ez_w_y * u3,
+            (kt/m) * ez_w_z * u3,
+            (-lx * kt * u3) / Ixx,
+            ( lx * kt * u3) / Iyy,
+            (-kd * u3)       / Izz
+        ], dtype=float)
+
+        # --- f4: contribution for u4 ---
         f4_contribution = np.array([
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                (kt/m) * ez_w_x * u4,
-                (kt/m) * ez_w_y * u4,
-                (kt/m) * ez_w_z * u4,
-                ( lx * kt * u4) / Ixx,
-                ( lx * kt * u4) / Iyy,
-                ( kd * u4) / Izz
-            ])
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            (kt/m) * ez_w_x * u4,
+            (kt/m) * ez_w_y * u4,
+            (kt/m) * ez_w_z * u4,
+            ( lx * kt * u4) / Ixx,
+            ( lx * kt * u4) / Iyy,
+            ( kd * u4)       / Izz
+        ], dtype=float)
+
         x_dot_vec = f0_contribution + f1_contribution + f2_contribution + f3_contribution + f4_contribution
         return x_dot_vec
 
