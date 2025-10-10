@@ -214,7 +214,7 @@ class H(object):
 def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
                    trajectory_shape='squiggle', setpoint=None, rterm=1e-10):
     """
-    trajectory_shape ∈ {'circle','lemniscate','alternating','squiggle','random','constant_psidot'}
+    trajectory_shape ∈ {'circle','lemniscate','squiggle','random','constant_psidot'}
     If setpoint is given, it should contain arrays over time for any of:
       'x','y','z','psi','x_dot','y_dot','z_dot','psi_dot' (others allowed, ignored by MPC if unused)
     """
@@ -240,10 +240,10 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
 
     # Build default 3D setpoints if none provided
     if setpoint is None:
-        assert trajectory_shape in ['circle','lemniscate','alternating','squiggle','random','constant_psidot']
+        assert trajectory_shape in ['circle','lemniscate','squiggle','random','constant_psidot']
 
         if trajectory_shape == 'circle':
-            R = 0.1
+            R = 1.0
             w = 0.3 * 2*np.pi
             x = R*np.cos(w*tsim)
             y = R*np.sin(w*tsim)
@@ -259,42 +259,6 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             z = 1.2 + 0.4*np.sin(0.5*w*tsim + 0.7)
             psi = NA
             setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
-
-        elif trajectory_shape == 'alternating':
-            # piecewise accel to get lateral & vertical changes
-            a = 0
-            b = int(len(tsim)/4.)
-            c = int(len(tsim)*2/4.)
-            d = int(len(tsim)*3/4.)
-            e = -1
-
-            ax = np.hstack(( 2.0*np.cos(0.3*2*np.pi*tsim)[a:b],
-                              0*tsim[b:c],
-                              2.0*np.cos(0.3*2*np.pi*tsim)[c:d],
-                              0*tsim[d:e]))
-            vx = np.cumsum(ax)*dt
-            x  = 5*np.cumsum(vx)*dt
-
-            ay = np.hstack(( 1.6*np.sin(0.27*2*np.pi*tsim)[a:b],
-                              0*tsim[b:c],
-                             -1.6*np.sin(0.27*2*np.pi*tsim)[c:d],
-                              0*tsim[d:e]))
-            vy = np.cumsum(ay)*dt
-            y  = 5*np.cumsum(vy)*dt
-
-            az = np.hstack(( 0.1*np.sin(0.2*2*np.pi*tsim)[a:b],
-                              0*tsim[b:c],
-                             -0.1*np.sin(0.2*2*np.pi*tsim)[c:d],
-                              0*tsim[d:e]))
-            vz = np.cumsum(az)*dt
-            z  = 5*np.cumsum(vz)*dt + 1.0
-
-            for arr in (x,y,z):
-                if len(arr) > len(tsim):
-                    arr[:] = arr[:len(tsim)]
-            psi = NA
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
-
         elif trajectory_shape == 'squiggle':
             x = 2.0*np.cos(2*np.pi*0.30*tsim)
             y = 1.5*np.sin(2*np.pi*0.22*tsim + 0.4)
