@@ -145,12 +145,8 @@ class H(object):
         self.measurement_option = measurement_option
 
     def h(self, x_vec, u_vec, return_measurement_names=False):
-        if not hasattr(self, self.measurement_option):
-            raise AttributeError(f"Unknown measurement option: {self.measurement_option}")
-        return getattr(self, self.measurement_option)(
-            np.asarray(x_vec).ravel(), np.asarray(u_vec).ravel(),
-            return_measurement_names=return_measurement_names
-        )
+        h_func = self.__getattribute__(self.measurement_option)
+        return h_func(x_vec, u_vec, return_measurement_names=return_measurement_names)
 
     def h_all(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
