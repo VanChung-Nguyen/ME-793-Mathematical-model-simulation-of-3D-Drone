@@ -210,9 +210,10 @@ class H(object):
     def h_opticalimu(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
             return [
-                'x','y','z',
+                'optic_flow_x','optic_flow_y',
                 'phi','theta','psi',
                 'phidot','thetadot','psidot',
+                 'ax','ay','az'
             ]
 
         x, y, z, phi, theta, psi = x_vec[0:6]
@@ -253,10 +254,9 @@ class H(object):
     def h_gpsimu(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
             return [
-                'optic_flow_x','optic_flow_y',
+                'x','y','z',
                 'phi','theta','psi',
-                'phidot','thetadot','psidot',
-                'ax','ay','az'
+                'phidot','thetadot','psidot'
             ]
 
         x, y, z, phi, theta, psi = x_vec[0:6]
