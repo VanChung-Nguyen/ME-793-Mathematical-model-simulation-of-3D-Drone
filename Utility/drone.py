@@ -151,34 +151,34 @@ class H(object):
     def h_all(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
             return [
-                'x','y','z',
-                'optic_flow_x','optic_flow_y',
-                'phi','theta','psi',
-                'phidot','thetadot','psidot',
-                'ax','ay','az'
+                'x', 'y', 'z',
+                'optic_flow_x', 'optic_flow_y',
+                'phi', 'theta', 'psi',
+                'phidot', 'thetadot', 'psidot',
+                'ax', 'ay', 'az'
             ]
 
         x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot         = x_vec[6:9]
-        p, q, r                  = x_vec[9:12]
+        xdot, ydot, zdot = x_vec[6:9]
+        p, q, r = x_vec[9:12]
         u1, u2, u3, u4 = u_vec
-        
+
         cphi, sphi = np.cos(phi), np.sin(phi)
         cth, sth = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
-    
+
         # Body z-axis in world frame
         ez_w_x = spsi * sphi + cpsi * sth * cphi
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
-        
+
         T = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
-    
+
         z_safe = z if abs(z) > 1e-3 else 1e-3
-    
+
         y_vec = np.array([
             x,
             y,
@@ -196,36 +196,37 @@ class H(object):
             az
         ])
         return y_vec
+
     def h_opticalimu(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
             return [
-                'optic_flow_x','optic_flow_y',
-                'phi','theta','psi',
-                'phidot','thetadot','psidot',
-                 'ax','ay','az'
+                'optic_flow_x', 'optic_flow_y',
+                'phi', 'theta', 'psi',
+                'phidot', 'thetadot', 'psidot',
+                'ax', 'ay', 'az'
             ]
 
         x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot         = x_vec[6:9]
-        p, q, r                  = x_vec[9:12]
+        xdot, ydot, zdot = x_vec[6:9]
+        p, q, r = x_vec[9:12]
         u1, u2, u3, u4 = u_vec
-        
+
         cphi, sphi = np.cos(phi), np.sin(phi)
         cth, sth = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
-    
+
         # Body z-axis in world frame
         ez_w_x = spsi * sphi + cpsi * sth * cphi
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
-        
+
         T = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
-    
+
         z_safe = z if abs(z) > 1e-3 else 1e-3
-    
+
         y_vec = np.array([
             xdot / z_safe,
             ydot / z_safe,
@@ -240,35 +241,36 @@ class H(object):
             az
         ])
         return y_vec
+
     def h_gpsimu(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
             return [
-                'x','y','z',
-                'phi','theta','psi',
-                'phidot','thetadot','psidot'
+                'x', 'y', 'z',
+                'phi', 'theta', 'psi',
+                'phidot', 'thetadot', 'psidot'
             ]
 
         x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot         = x_vec[6:9]
-        p, q, r                  = x_vec[9:12]
+        xdot, ydot, zdot = x_vec[6:9]
+        p, q, r = x_vec[9:12]
         u1, u2, u3, u4 = u_vec
-        
+
         cphi, sphi = np.cos(phi), np.sin(phi)
         cth, sth = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
-    
+
         # Body z-axis in world frame
         ez_w_x = spsi * sphi + cpsi * sth * cphi
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
-        
+
         T = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
-    
+
         z_safe = z if abs(z) > 1e-3 else 1e-3
-    
+
         y_vec = np.array([
             x,
             y,
