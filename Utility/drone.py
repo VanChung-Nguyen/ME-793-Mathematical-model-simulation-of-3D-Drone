@@ -141,15 +141,7 @@ class F(object):
 # Continuous-time measurement functions
 ############################################################################################
 class H(object):
-    """
-    Measurements:
-      - x, y, z
-      - optical flow-like terms xdot/z, ydot/z (safe division)
-      - Euler angles phi, theta, psi
-      - angular rates phidot, thetadot, psidot
-      - accelerations (world-frame ax, ay, az) from dynamics
-    """
-    def __init__(self, measurement_option='h_all'):
+   def __init__(self, measurement_option):
         self.measurement_option = measurement_option
 
     def h(self, x_vec, u_vec, return_measurement_names=False):
