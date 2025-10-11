@@ -143,7 +143,7 @@ class F(object):
 class H(object):
    def __init__(self, measurement_option):
         self.measurement_option = measurement_option
-
+       
     def h(self, x_vec, u_vec, return_measurement_names=False):
         if not hasattr(self, self.measurement_option):
             raise AttributeError(f"Unknown measurement option: {self.measurement_option}")
