@@ -299,7 +299,10 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
     input_names = ['u1','u2','u3','u4']
 
     if measurement_names is None:
-        measurement_names = H().h(None, None, return_measurement_names=True)
+        try:
+            measurement_names = h(None, None, return_measurement_names=True) 
+        except:
+            raise ValueError('Need to provide measurement_names as a list of strings')
 
     # Initialize simulator
     simulator = pybounds.Simulator(
