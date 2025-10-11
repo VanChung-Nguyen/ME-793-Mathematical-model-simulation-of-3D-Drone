@@ -141,14 +141,15 @@ class F(object):
 # Continuous-time measurement functions
 ############################################################################################
 class H(object):
-   def __init__(self, measurement_option):
+    def __init__(self, measurement_option):
         self.measurement_option = measurement_option
-       
+
     def h(self, x_vec, u_vec, return_measurement_names=False):
         if not hasattr(self, self.measurement_option):
             raise AttributeError(f"Unknown measurement option: {self.measurement_option}")
         return getattr(self, self.measurement_option)(
-            x_vec, u_vec, return_measurement_names=return_measurement_names
+            np.asarray(x_vec).ravel(), np.asarray(u_vec).ravel(),
+            return_measurement_names=return_measurement_names
         )
 
     def h_all(self, x_vec, u_vec, return_measurement_names=False):
