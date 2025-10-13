@@ -335,7 +335,7 @@ class H(object):
 def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
                    trajectory_shape='squiggle', setpoint=None, rterm=1e-10):
     """
-    trajectory_shape ∈ {'circle','lemniscate','squiggle','random','constant_psidot'}
+    trajectory_shape ∈ {'maneuvers','circle','lemniscate','squiggle','random','constant_psidot'}
     If setpoint is given, it should contain arrays over time for any of:
       'x','y','z','psi','x_dot','y_dot','z_dot','psi_dot' (others allowed, ignored by MPC if unused)
     """
@@ -366,6 +366,13 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
     if setpoint is None:
         assert trajectory_shape in ['circle','lemniscate','squiggle','random','constant_psidot']
 
+        if trajectory_shape == 'maneuvers':
+            x = NA
+            y = NA
+            z = 1.0 
+            psi = NA
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            
         if trajectory_shape == 'circle':
             R = 1.0
             w = 0.3 * 2*np.pi
