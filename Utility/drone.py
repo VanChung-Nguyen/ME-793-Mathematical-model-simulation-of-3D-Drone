@@ -365,7 +365,6 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
     # Build default 3D setpoints if none provided
     if setpoint is None:
         assert trajectory_shape in ['maneuvers','circle','lemniscate','squiggle','random','constant_psidot']
-
         if trajectory_shape == 'maneuvers':
             x = NA
             y = NA
