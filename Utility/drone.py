@@ -351,7 +351,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = NA
             z = ONE
             psi = NA
-            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
             
         if trajectory_shape == 'circle':
             R = 1.0
@@ -360,7 +360,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = R*np.sin(w*tsim)
             z = 1.0 + 0.3*np.sin(0.5*w*tsim)
             psi = NA
-            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'lemniscate':
             a = 2.0
@@ -369,14 +369,14 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = a * np.sin(w*tsim) * np.cos(w*tsim)
             z = 1.2 + 0.4*np.sin(0.5*w*tsim + 0.7)
             psi = NA
-            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'squiggle':
             x = 2.0*np.cos(2*np.pi*0.30*tsim)
             y = 1.5*np.sin(2*np.pi*0.22*tsim + 0.4)
             z = 0.8 + 0.4*np.sin(2*np.pi*0.18*tsim + 0.9)
             psi = NA
-            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'random':
             def generate_smooth_curve(t_points, method='spline', smoothness=0.1, amplitude=1.0, seed=None):
@@ -394,7 +394,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = generate_smooth_curve(tsim, smoothness=0.12, amplitude=2.6, seed=7)
             z = 1.5 + 0.6*generate_smooth_curve(tsim, smoothness=0.10, amplitude=2.0, seed=24)
             psi = NA
-            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
         elif trajectory_shape == 'constant_psidot':
             psidot = 0.15*np.sign(np.cos(tsim*2*np.pi*0.15))
@@ -402,7 +402,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             x = np.zeros_like(tsim)
             y = np.zeros_like(tsim)
             z = np.ones_like(tsim)*1.5
-            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
 
     # Feed setpoints into simulator's TVPs
     # Convention: simulator.model.tvp has fields 'x_set','y_set','z_set','psi_set'
