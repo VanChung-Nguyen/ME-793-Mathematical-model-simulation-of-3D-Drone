@@ -32,27 +32,30 @@ class F(object):
             return ['x','y','z','phi','theta','psi',
                     'xdot','ydot','zdot','phidot','thetadot','psidot']
 
-        # --- ensure scalars when indexing ---
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        phidot, thetadot, psidot = x_vec[9:12]
-    
+        # --- ensure 1-D arrays and scalars when indexing ---
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
+
+        x, y, z, phi, theta, psi         = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot                 = [float(x_arr[i]) for i in range(6, 9)]
+        phidot, thetadot, psidot         = [float(x_arr[i]) for i in range(9, 12)]
+
         # Inputs
-        u1, u2, u3, u4 = u_vec
-    
+        u1, u2, u3, u4 = [float(ui) for ui in np.ravel(u_arr)[:4]]
+
         # Shorthands
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth, sth   = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
-    
+
         # Body z-axis in world frame
         ez_w_x = spsi * sphi + cpsi * sth * cphi
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
-    
+
         # Angular rates
         p, q, r = phidot, thetadot, psidot
-    
+
         # --- f0: drift (no control) ---
         f0_contribution = np.array([
             xdot,
@@ -67,72 +70,52 @@ class F(object):
             ((Iyy - Izz)/Ixx)*q*r,
             ((Izz - Ixx)/Iyy)*r*p,
             ((Ixx - Iyy)/Izz)*p*q
-        ])
-    
+        ], dtype=float)
+
         # --- f1: contribution for u1 ---
         f1_contribution = np.array([
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             (kt/m) * ez_w_x * u1,
             (kt/m) * ez_w_y * u1,
             (kt/m) * ez_w_z * u1,
             (-lx * kt * u1) / Ixx,
             (-lx * kt * u1) / Iyy,
             ( kd * u1) / Izz
-        ])
-    
+        ], dtype=float)
+
         # --- f2: contribution for u2 ---
         f2_contribution = np.array([
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             (kt/m) * ez_w_x * u2,
             (kt/m) * ez_w_y * u2,
             (kt/m) * ez_w_z * u2,
             ( lx * kt * u2) / Ixx,
             (-lx * kt * u2) / Iyy,
             (-kd * u2) / Izz
-        ])
-    
+        ], dtype=float)
+
         # --- f3: contribution for u3 ---
         f3_contribution = np.array([
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             (kt/m) * ez_w_x * u3,
             (kt/m) * ez_w_y * u3,
             (kt/m) * ez_w_z * u3,
             (-lx * kt * u3) / Ixx,
             ( lx * kt * u3) / Iyy,
             (-kd * u3) / Izz
-        ])
-    
+        ], dtype=float)
+
         # --- f4: contribution for u4 ---
         f4_contribution = np.array([
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             (kt/m) * ez_w_x * u4,
             (kt/m) * ez_w_y * u4,
             (kt/m) * ez_w_z * u4,
             ( lx * kt * u4) / Ixx,
             ( lx * kt * u4) / Iyy,
             ( kd * u4) / Izz
-        ])
-    
+        ], dtype=float)
+
         # --- Combine dynamics ---
         x_dot_vec = f0_contribution + f1_contribution + f2_contribution + f3_contribution + f4_contribution
         return x_dot_vec
@@ -158,13 +141,16 @@ class H(object):
                 'ax', 'ay', 'az'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
+
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [float(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
+        u1, u2, u3, u4           = [float(ui) for ui in np.ravel(u_arr)[:4]]
 
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
         # Body z-axis in world frame
@@ -172,29 +158,29 @@ class H(object):
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
 
-        T = kt * (u1 + u2 + u3 + u4)
+        T  = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
 
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        z_safe = float(z) if abs(z) > 1e-3 else 1e-3
 
         y_vec = np.array([
-            x,
-            y,
-            z,
-            xdot / z_safe,
-            ydot / z_safe,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r,
-            ax,
-            ay,
-            az
-        ])
+            float(x),
+            float(y),
+            float(z),
+            float(xdot / z_safe),
+            float(ydot / z_safe),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r),
+            float(ax),
+            float(ay),
+            float(az)
+        ], dtype=float)
         return y_vec
 
     def h_opticalimu(self, x_vec, u_vec, return_measurement_names=False):
@@ -206,13 +192,16 @@ class H(object):
                 'ax', 'ay', 'az'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
+
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [float(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
+        u1, u2, u3, u4           = [float(ui) for ui in np.ravel(u_arr)[:4]]
 
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
         # Body z-axis in world frame
@@ -220,27 +209,28 @@ class H(object):
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
 
-        T = kt * (u1 + u2 + u3 + u4)
+        T  = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
 
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        z_safe = float(z) if abs(z) > 1e-3 else 1e-3
 
         y_vec = np.array([
-            xdot / z_safe,
-            ydot / z_safe,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r,
-            ax,
-            ay,
-            az
-        ])
+            float(xdot / z_safe),
+            float(ydot / z_safe),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r),
+            float(ax),
+            float(ay),
+            float(az)
+        ], dtype=float)
         return y_vec
+
     def h_opticalimuz(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
             return [
@@ -250,13 +240,16 @@ class H(object):
                 'ax', 'ay', 'az'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
+
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [float(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
+        u1, u2, u3, u4           = [float(ui) for ui in np.ravel(u_arr)[:4]]
 
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
         # Body z-axis in world frame
@@ -264,27 +257,27 @@ class H(object):
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
 
-        T = kt * (u1 + u2 + u3 + u4)
+        T  = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
 
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        z_safe = float(z) if abs(z) > 1e-3 else 1e-3
 
         y_vec = np.array([
-            z,
-            xdot / z_safe,
-            ydot / z_safe,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r,
-            ax,
-            ay,
-            az
-        ])
+            float(z),
+            float(xdot / z_safe),
+            float(ydot / z_safe),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r),
+            float(ax),
+            float(ay),
+            float(az)
+        ], dtype=float)
         return y_vec
 
     def h_gpsimu(self, x_vec, u_vec, return_measurement_names=False):
@@ -295,38 +288,25 @@ class H(object):
                 'phidot', 'thetadot', 'psidot'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
 
-        cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
-        cpsi, spsi = np.cos(psi), np.sin(psi)
-
-        # Body z-axis in world frame
-        ez_w_x = spsi * sphi + cpsi * sth * cphi
-        ez_w_y = spsi * sth * cphi - cpsi * sphi
-        ez_w_z = cphi * cth
-
-        T = kt * (u1 + u2 + u3 + u4)
-        ax = (T / m) * ez_w_x
-        ay = (T / m) * ez_w_y
-        az = (T / m) * ez_w_z - g
-
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [float(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
+        # u1..u4 unused in this measurement; still parsed for consistency
 
         y_vec = np.array([
-            x,
-            y,
-            z,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r
-        ])
+            float(x),
+            float(y),
+            float(z),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r)
+        ], dtype=float)
         return y_vec
 
 ############################################################################################
@@ -360,7 +340,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
 
     # Time base
     tsim = np.arange(0.0, tsim_length, step=dt)
-    NA = np.zeros_like(tsim)
+    NA  = np.zeros_like(tsim)
     ONE = np.ones_like(tsim)
                        
     # Build default 3D setpoints if none provided
@@ -369,9 +349,9 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
         if trajectory_shape == 'maneuvers':
             x = NA
             y = NA
-            z = ONE 
+            z = ONE
             psi = NA
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
             
         if trajectory_shape == 'circle':
             R = 1.0
@@ -380,7 +360,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = R*np.sin(w*tsim)
             z = 1.0 + 0.3*np.sin(0.5*w*tsim)
             psi = NA
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
 
         elif trajectory_shape == 'lemniscate':
             a = 2.0
@@ -389,13 +369,14 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = a * np.sin(w*tsim) * np.cos(w*tsim)
             z = 1.2 + 0.4*np.sin(0.5*w*tsim + 0.7)
             psi = NA
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
+
         elif trajectory_shape == 'squiggle':
             x = 2.0*np.cos(2*np.pi*0.30*tsim)
             y = 1.5*np.sin(2*np.pi*0.22*tsim + 0.4)
             z = 0.8 + 0.4*np.sin(2*np.pi*0.18*tsim + 0.9)
             psi = NA
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
 
         elif trajectory_shape == 'random':
             def generate_smooth_curve(t_points, method='spline', smoothness=0.1, amplitude=1.0, seed=None):
@@ -413,7 +394,7 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             y = generate_smooth_curve(tsim, smoothness=0.12, amplitude=2.6, seed=7)
             z = 1.5 + 0.6*generate_smooth_curve(tsim, smoothness=0.10, amplitude=2.0, seed=24)
             psi = NA
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
 
         elif trajectory_shape == 'constant_psidot':
             psidot = 0.15*np.sign(np.cos(tsim*2*np.pi*0.15))
@@ -421,14 +402,13 @@ def simulate_drone(f, h, tsim_length=20.0, dt=0.1, measurement_names=None,
             x = np.zeros_like(tsim)
             y = np.zeros_like(tsim)
             z = np.ones_like(tsim)*1.5
-            setpoint = {'x': x, 'y': y, 'z': z, 'psi': psi}
+            setpoint = {'x_set': x, 'y_set': y, 'z_set': z, 'psi_set': psi}
 
     # Feed setpoints into simulator's TVPs
-    # Convention: simulator.model.tvp has fields 'x_set','y_set','z_set','psi_set' if used in your pybounds model.
+    # Convention: simulator.model.tvp has fields 'x_set','y_set','z_set','psi_set'
     simulator.update_dict(setpoint, name='setpoint')
 
     # --- Objective (track position + altitude + yaw) ---
-    # Use tvp keys exactly as defined above (no *_set suffixes)
     cost_x   = (simulator.model.x['x']   - simulator.model.tvp['x_set'])   ** 2
     cost_y   = (simulator.model.x['y']   - simulator.model.tvp['y_set'])   ** 2
     cost_z   = (simulator.model.x['z']   - simulator.model.tvp['z_set'])   ** 2
