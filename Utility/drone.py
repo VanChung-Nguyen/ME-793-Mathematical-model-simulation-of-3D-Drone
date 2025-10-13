@@ -239,7 +239,7 @@ class H(object):
             ax,
             ay,
             az
-        ], dtype=float)
+        ])
         return y_vec
     def h_opticalimuz(self, x_vec, u_vec, return_measurement_names=False):
         if return_measurement_names:
