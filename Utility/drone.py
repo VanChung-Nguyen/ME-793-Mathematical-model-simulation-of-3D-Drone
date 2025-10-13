@@ -158,13 +158,16 @@ class H(object):
                 'ax', 'ay', 'az'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
+
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [float(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
+        u1, u2, u3, u4           = [float(ui) for ui in np.ravel(u_arr)[:4]]
 
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
         # Body z-axis in world frame
@@ -172,29 +175,29 @@ class H(object):
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
 
-        T = kt * (u1 + u2 + u3 + u4)
+        T  = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
 
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        z_safe = float(z) if abs(z) > 1e-3 else 1e-3
 
         y_vec = np.array([
-            x,
-            y,
-            z,
-            xdot / z_safe,
-            ydot / z_safe,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r,
-            ax,
-            ay,
-            az
-        ])
+            float(x),
+            float(y),
+            float(z),
+            float(xdot / z_safe),
+            float(ydot / z_safe),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r),
+            float(ax),
+            float(ay),
+            float(az)
+        ], dtype=float)
         return y_vec
 
     def h_opticalimu(self, x_vec, u_vec, return_measurement_names=False):
@@ -206,13 +209,28 @@ class H(object):
                 'ax', 'ay', 'az'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        # helper to make sure we always operate on scalars
+        def _scalar(v):
+            a = np.asarray(v)
+            if a.size == 0:
+                return 0.0
+            return float(a.reshape(-1)[0])
+
+        x_arr = np.asarray(x_vec)
+        u_arr = np.asarray(u_vec)
+
+        x, y, z, phi, theta, psi = [_scalar(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [_scalar(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [_scalar(x_arr[i]) for i in range(9, 12)]
+
+        # inputs (pad if fewer than 4 to avoid shape surprises)
+        u_flat = u_arr.reshape(-1)
+        if u_flat.size < 4:
+            u_flat = np.pad(u_flat, (0, 4 - u_flat.size), mode='constant')
+        u1, u2, u3, u4 = [_scalar(u_flat[i]) for i in range(4)]
 
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
         # Body z-axis in world frame
@@ -220,7 +238,7 @@ class H(object):
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
 
-        T = kt * (u1 + u2 + u3 + u4)
+        T  = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
@@ -228,18 +246,18 @@ class H(object):
         z_safe = z if abs(z) > 1e-3 else 1e-3
 
         y_vec = np.array([
-            xdot / z_safe,
-            ydot / z_safe,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r,
-            ax,
-            ay,
-            az
-        ])
+            float(xdot / z_safe),
+            float(ydot / z_safe),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r),
+            float(ax),
+            float(ay),
+            float(az)
+        ], dtype=float)
         return y_vec
 
     def h_opticalimuz(self, x_vec, u_vec, return_measurement_names=False):
@@ -251,13 +269,16 @@ class H(object):
                 'ax', 'ay', 'az'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
+        u_arr = np.asarray(u_vec).squeeze()
+
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        xdot, ydot, zdot         = [float(x_arr[i]) for i in range(6, 9)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
+        u1, u2, u3, u4           = [float(ui) for ui in np.ravel(u_arr)[:4]]
 
         cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
+        cth,  sth  = np.cos(theta), np.sin(theta)
         cpsi, spsi = np.cos(psi), np.sin(psi)
 
         # Body z-axis in world frame
@@ -265,27 +286,27 @@ class H(object):
         ez_w_y = spsi * sth * cphi - cpsi * sphi
         ez_w_z = cphi * cth
 
-        T = kt * (u1 + u2 + u3 + u4)
+        T  = kt * (u1 + u2 + u3 + u4)
         ax = (T / m) * ez_w_x
         ay = (T / m) * ez_w_y
         az = (T / m) * ez_w_z - g
 
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        z_safe = float(z) if abs(z) > 1e-3 else 1e-3
 
         y_vec = np.array([
-            z,
-            xdot / z_safe,
-            ydot / z_safe,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r,
-            ax,
-            ay,
-            az
-        ])
+            float(z),
+            float(xdot / z_safe),
+            float(ydot / z_safe),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r),
+            float(ax),
+            float(ay),
+            float(az)
+        ], dtype=float)
         return y_vec
 
     def h_gpsimu(self, x_vec, u_vec, return_measurement_names=False):
@@ -296,38 +317,22 @@ class H(object):
                 'phidot', 'thetadot', 'psidot'
             ]
 
-        x, y, z, phi, theta, psi = x_vec[0:6]
-        xdot, ydot, zdot = x_vec[6:9]
-        p, q, r = x_vec[9:12]
-        u1, u2, u3, u4 = u_vec
+        x_arr = np.asarray(x_vec).squeeze()
 
-        cphi, sphi = np.cos(phi), np.sin(phi)
-        cth, sth = np.cos(theta), np.sin(theta)
-        cpsi, spsi = np.cos(psi), np.sin(psi)
-
-        # Body z-axis in world frame
-        ez_w_x = spsi * sphi + cpsi * sth * cphi
-        ez_w_y = spsi * sth * cphi - cpsi * sphi
-        ez_w_z = cphi * cth
-
-        T = kt * (u1 + u2 + u3 + u4)
-        ax = (T / m) * ez_w_x
-        ay = (T / m) * ez_w_y
-        az = (T / m) * ez_w_z - g
-
-        z_safe = z if abs(z) > 1e-3 else 1e-3
+        x, y, z, phi, theta, psi = [float(x_arr[i]) for i in range(6)]
+        p, q, r                  = [float(x_arr[i]) for i in range(9, 12)]
 
         y_vec = np.array([
-            x,
-            y,
-            z,
-            phi,
-            theta,
-            psi,
-            p,
-            q,
-            r
-        ])
+            float(x),
+            float(y),
+            float(z),
+            float(phi),
+            float(theta),
+            float(psi),
+            float(p),
+            float(q),
+            float(r)
+        ], dtype=float)
         return y_vec
 
 ############################################################################################
